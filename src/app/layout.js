@@ -1,11 +1,5 @@
-import { Inter } from "next/font/google";
 import "./globals.css";
-
-
-const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-inter",
-});
+import ThemeProvider from "./_components/shared/ThemeProvider";
 
 export const metadata = {
   title: "Euphori-Love",
@@ -15,8 +9,10 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body className={`${inter.variable} antialiased bg-background text-text-primary min-h-screen`} suppressHydrationWarning>
-        {children}
+      <body className="antialiased" suppressHydrationWarning>
+        <ThemeProvider>
+          {children}
+        </ThemeProvider>
       </body>
     </html>
   );

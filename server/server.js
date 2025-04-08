@@ -78,11 +78,33 @@ const io = require("socket.io")(process.env.PORT || 3001, {
         roomMessages[roomId] = [];
       }
   
-      // Store the message with type
-      roomMessages[roomId].push({ type, message, senderId, content });
+      // Store the message with type and a unique id
+      const messageId = Date.now().toString();
+      roomMessages[roomId].push({ type, message, senderId, content, messageId });
   
       // Broadcast the message to everyone in the room
-      io.to(roomId).emit("receive-message", { type, message, senderId, content });
+      io.to(roomId).emit("receive-message", { type, message, senderId, content, messageId });
+    });
+  
+    // Handle message deletion
+    socket.on("delete-message", (data) => {
+      const { roomId, messageId, senderId } = data;
+      
+      if (!roomMessages[roomId]) return;
+      
+      // Find the message to delete
+      const messageIndex = roomMessages[roomId].findIndex(msg => msg.messageId === messageId);
+      
+      if (messageIndex === -1) return;
+      
+      // Only allow deletion if the sender is the same
+      if (roomMessages[roomId][messageIndex].senderId === senderId) {
+        // Remove the message
+        roomMessages[roomId].splice(messageIndex, 1);
+        
+        // Broadcast the deletion to everyone in the room
+        io.to(roomId).emit("message-deleted", { messageId });
+      }
     });
   
     // Handle user disconnection

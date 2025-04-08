@@ -42,7 +42,7 @@ const ChatRoom = ({ roomId }) => {
     }, []);
     const [message, setMessage] = useState("");
     const [chat, setChat] = useState([]);
-    const [userId, setUserId] = useState("");
+    const [userId, setUserId] = useState(null);
     const [roomUsers, setRoomUsers] = useState([]);
     const [videoId, setVideoId] = useState("");
     const [player, setPlayer] = useState(null);
@@ -63,11 +63,57 @@ const ChatRoom = ({ roomId }) => {
     const notificationTone = useRef(null);
     const audioRef = useRef(null);
     const fileInputRef = useRef(null);
+    const [messages, setMessages] = useState([]);
+    const [users, setUsers] = useState([]);
+    const [isTyping, setIsTyping] = useState(false);
+    const [typingUser, setTypingUser] = useState(null);
+    const [currentAudio, setCurrentAudio] = useState(null);
+    const [isMuted, setIsMuted] = useState(false);
+    const [isDeafened, setIsDeafened] = useState(false);
+    const [isVideoOn, setIsVideoOn] = useState(false);
+    const [isScreenSharing, setIsScreenSharing] = useState(false);
+    const [isHandRaised, setIsHandRaised] = useState(false);
+    const [isReactionMenuOpen, setIsReactionMenuOpen] = useState(false);
+    const [selectedMessageId, setSelectedMessageId] = useState(null);
+    const [reactionMenuPosition, setReactionMenuPosition] = useState({ x: 0, y: 0 });
+    const [reactions, setReactions] = useState({});
+    const [isEmojiPickerOpen, setIsEmojiPickerOpen] = useState(false);
+    const [emojiPickerPosition, setEmojiPickerPosition] = useState({ x: 0, y: 0 });
+    const [selectedEmojiMessageId, setSelectedEmojiMessageId] = useState(null);
+    const [messageReactions, setMessageReactions] = useState({});
+    const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+    const [messageToDelete, setMessageToDelete] = useState(null);
 
     useEffect(() => {
-        const id = uuidv4();
-        setUserId(id);
-    }, []);
+        // Generate a unique user ID if not already set
+        if (!userId) {
+            setUserId(Date.now().toString());
+        }
+    }, [userId]);
+
+    useEffect(() => {
+        if (socket) {
+            socket.on("receive-message", (data) => {
+                setMessages((prev) => [...prev, data]);
+            });
+
+            socket.on("message-deleted", (data) => {
+                setMessages((prev) => prev.filter(msg => msg.messageId !== data.messageId));
+            });
+
+            socket.on("user-joined", (data) => {
+                setUsers((prev) => [...prev, data]);
+            });
+
+            socket.emit("join-room", roomId);
+
+            return () => {
+                socket.off("receive-message");
+                socket.off("message-deleted");
+                socket.off("user-joined");
+            };
+        }
+    }, [socket, roomId]);
 
     useEffect(() => {
         if (!socket) return;
@@ -75,11 +121,6 @@ const ChatRoom = ({ roomId }) => {
         socket.on("connect", () => {
             console.log("Connected to server");
         });
-        socket.on("receive-message", (data) => {
-            console.log("Received message:", data);
-            setChat((prev) => [...prev, data]);
-        });
-
         socket.on("room-users", (users) => {
             setRoomUsers(users);
         });
@@ -108,11 +149,8 @@ const ChatRoom = ({ roomId }) => {
             }
         });
 
-        socket.emit("join-room", roomId);
-
         return () => {
             socket.off("connect");
-            socket.off("receive-message");
             socket.off("room-users");
             socket.off("play-video");
             socket.off("pause-video");
@@ -342,7 +380,109 @@ const ChatRoom = ({ roomId }) => {
         if (scroll.current) {
             scroll.current.scrollTop = scroll.current.scrollHeight;
         }
-    }, [chat]);
+    }, [messages]);
+
+    const handleDeleteMessage = (messageId) => {
+        if (!socket || !roomId || !userId) return;
+        
+        socket.emit("delete-message", {
+            roomId,
+            messageId,
+            senderId: userId
+        });
+    };
+
+    const confirmDeleteMessage = (messageId) => {
+        setMessageToDelete(messageId);
+        setIsDeleteConfirmOpen(true);
+    };
+
+    const renderMessage = (msg, index) => {
+        const isCurrentUser = msg.senderId === userId;
+        const messageReactions = reactions[msg.messageId] || [];
+        
+        return (
+            <div
+                key={index}
+                className={`flex ${isCurrentUser ? "justify-end" : "justify-start"} mb-4`}
+            >
+                <div
+                    className={`relative group max-w-[70%] ${
+                        isCurrentUser ? "bg-blue-500 text-white" : "bg-gray-200 text-gray-800"
+                    } rounded-lg p-3`}
+                >
+                    {isCurrentUser && (
+                        <div className="absolute -right-8 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button
+                                onClick={() => confirmDeleteMessage(msg.messageId)}
+                                className="p-1 text-gray-500 hover:text-red-500"
+                            >
+                                <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    className="h-4 w-4"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke="currentColor"
+                                >
+                                    <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                    />
+                                </svg>
+                            </button>
+                        </div>
+                    )}
+                    {msg.type === "text" && msg.message}
+                    {msg.type === "media" && (
+                        <>
+                            {msg.content?.startsWith("data:image") && (
+                                <img src={msg.content} alt="Shared media" className="max-w-full rounded-lg" />
+                            )}
+
+                            {msg.content?.startsWith("data:video") && (
+                                <video controls className="max-w-full rounded-lg">
+                                    <source src={msg.content} type="video/mp4" />
+                                    Your browser does not support the video tag.
+                                </video>
+                            )}
+
+                            {msg.content?.startsWith("blob:") && (
+                                <>
+                                    {msg.content?.includes("image") ? (
+                                        <img src={msg.content} alt="Shared media" className="max-w-full rounded-lg" />
+                                    ) : msg.content?.includes("video") ? (
+                                        <video controls className="max-w-full rounded-lg">
+                                            <source src={msg.content} type="video/mp4" />
+                                            Your browser does not support the video tag.
+                                        </video>
+                                    ) : null}
+                                </>
+                            )}
+                        </>
+                    )}
+                    {msg.type === "audio" && (
+                        <div className="flex items-center space-x-2">
+                            <audio controls src={msg.content} className="max-w-full" />
+                            <span className="text-sm text-white/80">Voice message</span>
+                        </div>
+                    )}
+                    {msg.type === "file" && (
+                        <div className="flex items-center space-x-2 p-2 bg-white/10 rounded-lg">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-primary-400" viewBox="0 0 20 20" fill="currentColor">
+                                <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 3.586L15.414 7A2 2 0 0116 8.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd" />
+                            </svg>
+                            <span className="text-white">{msg.fileName}</span>
+                            <a href={msg.content} download className="ml-auto text-primary-400 hover:text-primary-500" target="_blank" rel="noopener noreferrer">
+                                Download
+                            </a>
+                        </div>
+                    )}
+                </div>
+            </div>
+        );
+    };
 
     return (
         <>
@@ -428,83 +568,13 @@ const ChatRoom = ({ roomId }) => {
 
                     {/* Chat */}
                     <div className="glass-effect flex-grow lg:h-[450px] h-[420px] overflow-y-scroll flex flex-col gap-4 py-5 px-4 lg:px-6 rounded-xl" ref={scroll}>
-                        {!chat || chat.length === 0 ? (
+                        {!messages || messages.length === 0 ? (
                             <div className="flex flex-col items-center justify-center h-full text-center">
                                 <Image src="/heart.png" alt="Empty" width={60} height={60} className="opacity-50 mb-4" />
                                 <p className="text-white/60">No messages yet. Start the conversation!</p>
                             </div>
                         ) : (
-                            chat.map((msg, index) => (
-                                <div
-                                    key={index}
-                                    className={`flex items-center ${msg.senderId === userId ? "justify-end" : "justify-start"}`}
-                                >
-                                    {msg.senderId !== userId && (
-                                        <div className="h-10 w-10 rounded-full bg-primary-600 flex items-center justify-center mr-2">
-                                            <Image
-                                                src="/heart.png"
-                                                alt="User"
-                                                width={20}
-                                                height={20}
-                                                className="rounded-full"
-                                            />
-                                        </div>
-                                    )}
-                                    <div
-                                        className={`py-3 px-4 max-w-xs rounded-2xl ${
-                                            msg.senderId === userId 
-                                                ? "bg-gradient-to-r from-primary-600 to-primary-700 text-white" 
-                                                : "glass-effect"
-                                        }`}
-                                    >
-                                        {msg.type === "text" && msg.message}
-                                        {msg.type === "media" && (
-                                            <>
-                                                {msg.content?.startsWith("data:image") && (
-                                                    <img src={msg.content} alt="Shared media" className="max-w-full rounded-lg" />
-                                                )}
-
-                                                {msg.content?.startsWith("data:video") && (
-                                                    <video controls className="max-w-full rounded-lg">
-                                                        <source src={msg.content} type="video/mp4" />
-                                                        Your browser does not support the video tag.
-                                                    </video>
-                                                )}
-
-                                                {msg.content?.startsWith("blob:") && (
-                                                    <>
-                                                        {msg.content?.includes("image") ? (
-                                                            <img src={msg.content} alt="Shared media" className="max-w-full rounded-lg" />
-                                                        ) : msg.content?.includes("video") ? (
-                                                            <video controls className="max-w-full rounded-lg">
-                                                                <source src={msg.content} type="video/mp4" />
-                                                                Your browser does not support the video tag.
-                                                            </video>
-                                                        ) : null}
-                                                    </>
-                                                )}
-                                            </>
-                                        )}
-                                        {msg.type === "audio" && (
-                                            <div className="flex items-center space-x-2">
-                                                <audio controls src={msg.content} className="max-w-full" />
-                                                <span className="text-sm text-white/80">Voice message</span>
-                                            </div>
-                                        )}
-                                        {msg.type === "file" && (
-                                            <div className="flex items-center space-x-2 p-2 bg-white/10 rounded-lg">
-                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-primary-400" viewBox="0 0 20 20" fill="currentColor">
-                                                    <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 3.586L15.414 7A2 2 0 0116 8.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd" />
-                                                </svg>
-                                                <span className="text-white">{msg.fileName}</span>
-                                                <a href={msg.content} download className="ml-auto text-primary-400 hover:text-primary-500" target="_blank" rel="noopener noreferrer">
-                                                    Download
-                                                </a>
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                            ))
+                            messages.map((msg, index) => renderMessage(msg, index))
                         )}
                     </div>
 
@@ -522,30 +592,31 @@ const ChatRoom = ({ roomId }) => {
                             className={`p-3 rounded-full ${isRecording ? 'bg-red-600 hover:bg-red-700' : 'bg-secondary-600 hover:bg-secondary-700'} transition-all flex items-center justify-center`}
                         >
                             {
-  isRecording ? (
-    <div className="flex items-center gap-2">
-      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-red-500 animate-pulse" viewBox="0 0 20 20" fill="currentColor">
-        <path fillRule="evenodd" d="M7 4a3 3 0 016 0v4a3 3 0 11-6 0V4zm4 10.93A7.001 7.001 0 0017 8a1 1 0 10-2 0A5 5 0 015 8a1 1 0 00-2 0 7.001 7.001 0 006 6.93V17H6a1 1 0 100 2h8a1 1 0 100-2h-3v-2.07z" clipRule="evenodd" />
-      </svg>
-      <span className="text-red-500 text-sm">{recordingTime}s</span>
-      <div className="flex gap-1 items-center">
-        {Array.from({length: 5}).map((_, i) => (
-          <div 
-            key={i}
-            className="w-1 h-4 bg-red-500 rounded-full"
-            style={{
-              height: `${Math.random() * 12 + 4}px`,
-              transition: 'height 0.2s ease-in-out'
-            }}
-          />
-        ))}
-      </div>
-    </div>
-  ) : (
-    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-white" viewBox="0 0 20 20" fill="currentColor">
-      <path fillRule="evenodd" d="M7 4a3 3 0 016 0v4a3 3 0 11-6 0V4zm4 10.93A7.001 7.001 0 0017 8a1 1 0 10-2 0A5 5 0 015 8a1 1 0 00-2 0 7.001 7.001 0 006 6.93V17H6a1 1 0 100 2h8a1 1 0 100-2h-3v-2.07z" clipRule="evenodd" />
-    </svg>
-  )}
+                                isRecording ? (
+                                    <div className="flex items-center gap-2">
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-red-500 animate-pulse" viewBox="0 0 20 20" fill="currentColor">
+                                            <path fillRule="evenodd" d="M7 4a3 3 0 016 0v4a3 3 0 11-6 0V4zm4 10.93A7.001 7.001 0 0017 8a1 1 0 10-2 0A5 5 0 015 8a1 1 0 00-2 0 7.001 7.001 0 006 6.93V17H6a1 1 0 100 2h8a1 1 0 100-2h-3v-2.07z" clipRule="evenodd" />
+                                        </svg>
+                                        <span className="text-red-500 text-sm">{recordingTime}s</span>
+                                        <div className="flex gap-1 items-center">
+                                            {Array.from({length: 5}).map((_, i) => (
+                                                <div 
+                                                    key={i}
+                                                    className="w-1 h-4 bg-red-500 rounded-full"
+                                                    style={{
+                                                        height: `${Math.random() * 12 + 4}px`,
+                                                        transition: 'height 0.2s ease-in-out'
+                                                    }}
+                                                />
+                                            ))}
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-white" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fillRule="evenodd" d="M7 4a3 3 0 016 0v4a3 3 0 11-6 0V4zm4 10.93A7.001 7.001 0 0017 8a1 1 0 10-2 0A5 5 0 015 8a1 1 0 00-2 0 7.001 7.001 0 006 6.93V17H6a1 1 0 100 2h8a1 1 0 100-2h-3v-2.07z" clipRule="evenodd" />
+                                    </svg>
+                                )
+                            }
                         </button>
                         <button
                             onClick={() => fileInputRef.current.click()}
@@ -660,6 +731,33 @@ const ChatRoom = ({ roomId }) => {
                                     ))}
                                 </div>
                             )}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Delete Confirmation Modal */}
+            {isDeleteConfirmOpen && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    <div className="bg-white rounded-lg p-6 max-w-sm w-full">
+                        <h3 className="text-lg font-semibold mb-4">Delete Message</h3>
+                        <p className="text-gray-600 mb-6">Are you sure you want to delete this message? This action cannot be undone.</p>
+                        <div className="flex justify-end space-x-4">
+                            <button
+                                onClick={() => setIsDeleteConfirmOpen(false)}
+                                className="px-4 py-2 text-gray-600 hover:text-gray-800"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={() => {
+                                    handleDeleteMessage(messageToDelete);
+                                    setIsDeleteConfirmOpen(false);
+                                }}
+                                className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+                            >
+                                Delete
+                            </button>
                         </div>
                     </div>
                 </div>

@@ -46,10 +46,6 @@ module.exports = {
           800: '#3730a3',
           900: '#312e81',
         },
-        music: {
-          accent: '#6366f1',
-          secondary: '#ec4899'
-        },
       },
       backgroundImage: {
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
@@ -68,4 +64,4 @@ module.exports = {
     },
   },
   plugins: [],
-};
+}; 

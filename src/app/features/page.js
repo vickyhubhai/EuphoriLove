@@ -1,91 +1,124 @@
 "use client";
-import Image from "next/image";
+import Navbar from '../_components/shared/Navbar';
+import { motion } from 'framer-motion';
 
-export default function Features() {
   const features = [
     {
-      title: "Real-time Chat",
-      description: "Connect instantly with others through our seamless real-time messaging system.",
-      icon: (
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-        </svg>
-      )
-    },
-    {
-      title: "Music Sharing",
-      description: "Share and enjoy music together in real-time with synchronized playback.",
-      icon: (
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
-        </svg>
-      )
-    },
-    {
-      title: "Private Rooms",
-      description: "Create and join private rooms for intimate conversations and shared experiences.",
-      icon: (
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z" />
-        </svg>
-      )
-    },
-    {
-      title: "Theme Customization",
-      description: "Personalize your experience with customizable themes and visual settings.",
-      icon: (
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
-        </svg>
-      )
-    }
-  ];
+    title: "Real-time Music Sync",
+    description: "Experience perfect synchronization with your partner's music in real-time, creating a shared musical journey.",
+    icon: (
+      <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+      </svg>
+    ),
+  },
+  {
+    title: "Mood-based Playlists",
+    description: "Create and share playlists based on different moods and occasions, perfect for any romantic moment.",
+    icon: (
+      <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-secondary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+      </svg>
+    ),
+  },
+  {
+    title: "Voice Chat",
+    description: "Stay connected with your partner through crystal-clear voice chat while enjoying music together.",
+    icon: (
+      <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+      </svg>
+    ),
+  },
+  {
+    title: "Customizable Rooms",
+    description: "Personalize your listening room with themes, backgrounds, and shared notes for a unique experience.",
+    icon: (
+      <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-secondary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
+      </svg>
+    ),
+  },
+  {
+    title: "Lyrics Display",
+    description: "Follow along with synchronized lyrics for both users, making it easy to sing along together.",
+    icon: (
+      <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+      </svg>
+    ),
+  },
+  {
+    title: "Activity History",
+    description: "Keep track of your shared listening history and favorite moments with detailed activity logs.",
+    icon: (
+      <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-secondary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+    ),
+  },
+];
 
+const FeaturesPage = () => {
   return (
-    <div className="flex flex-col min-h-screen w-screen bg-background background-gradient text-white py-2 relative overflow-y-auto" suppressHydrationWarning>
-      <div className="fixed h-[800px] w-[800px] bg-primary-700/30 rounded-full blur-3xl -z-10 absolute bottom-0 -left-32"></div>
-      <div className="fixed h-[400px] w-[400px] bg-secondary-600/30 rounded-full blur-3xl -z-10 absolute top-0 -right-32"></div>
+    <div className="min-h-screen bg-background background-gradient">
+      <Navbar />
       
-      <div className="max-w-screen-lg mx-auto w-full px-4 py-8">
-        <div className="glass-effect rounded-xl p-8 mb-8 text-center">
-          <h1 className="text-4xl font-bold gradient-text mb-4">Platform Features</h1>
-          <p className="text-lg text-gray-200">
-            Discover the amazing features that make EuphoriLove a unique platform for connecting hearts.
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="text-center mb-16"
+        >
+          <h1 className="text-4xl sm:text-5xl font-bold gradient-text mb-4">
+            Features
+          </h1>
+          <p className="text-lg text-white/80 max-w-2xl mx-auto">
+            Discover the amazing features that make EuphoriLove the perfect platform for sharing music with your loved ones.
           </p>
-        </div>
+        </motion.div>
 
-        <div className="grid md:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {features.map((feature, index) => (
-            <div key={index} className="glass-effect rounded-xl p-6 transform hover:scale-105 transition-transform duration-300">
-              <div className="flex items-center space-x-4 mb-4">
-                <div className="p-3 rounded-full bg-primary-600/30">
-                  {feature.icon}
-                </div>
-                <h2 className="text-2xl font-semibold gradient-text">{feature.title}</h2>
-              </div>
-              <p className="text-gray-200">{feature.description}</p>
-            </div>
+            <motion.div
+              key={index}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: index * 0.1 }}
+              className="feature-card p-6"
+            >
+              <div className="mb-4">{feature.icon}</div>
+              <h3 className="text-xl font-bold text-white mb-2">{feature.title}</h3>
+              <p className="text-white/70">{feature.description}</p>
+            </motion.div>
           ))}
         </div>
 
-        <div className="glass-effect rounded-xl p-8 mt-8 text-center backdrop-blur-lg border border-white/10">
-          <h2 className="text-3xl font-bold gradient-text mb-6">Coming Soon</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            <div className="p-6 rounded-lg bg-primary-600/30 backdrop-blur-lg border border-white/10 hover:bg-primary-600/40 transition-colors">
-              <p className="font-semibold text-lg text-white">Video Calls</p>
+        {/* Additional Features Section */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.6 }}
+          className="mt-20 text-center"
+        >
+          <h2 className="text-3xl font-bold gradient-text mb-8">
+            Coming Soon
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+            <div className="glass-effect p-6 rounded-xl">
+              <h3 className="text-xl font-bold text-white mb-2">Video Chat</h3>
+              <p className="text-white/70">See your partner's reactions while listening to music together.</p>
             </div>
-            <div className="p-6 rounded-lg bg-primary-600/30 backdrop-blur-lg border border-white/10 hover:bg-primary-600/40 transition-colors">
-              <p className="font-semibold text-lg text-white">File Sharing</p>
-            </div>
-            <div className="p-6 rounded-lg bg-primary-600/30 backdrop-blur-lg border border-white/10 hover:bg-primary-600/40 transition-colors">
-              <p className="font-semibold text-lg text-white">Voice Messages</p>
-            </div>
-            <div className="p-6 rounded-lg bg-primary-600/30 backdrop-blur-lg border border-white/10 hover:bg-primary-600/40 transition-colors">
-              <p className="font-semibold text-lg text-white">Custom Emojis</p>
+            <div className="glass-effect p-6 rounded-xl">
+              <h3 className="text-xl font-bold text-white mb-2">Shared Playlists</h3>
+              <p className="text-white/70">Collaboratively create and manage playlists with your partner.</p>
             </div>
           </div>
-        </div>
+        </motion.div>
       </div>
     </div>
   );
-}
+};
+
+export default FeaturesPage;
